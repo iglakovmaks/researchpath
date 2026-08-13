@@ -1,0 +1,34 @@
+{
+  "dataset": "scifact",
+  "split": "test",
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "corpus_size": 5183,
+  "query_count": 300,
+  "truncated": false,
+  "metrics": {
+    "ndcg": {
+      "NDCG@1": 0.50333,
+      "NDCG@3": 0.59673,
+      "NDCG@5": 0.62928,
+      "NDCG@10": 0.64508
+    },
+    "map": {
+      "MAP@1": 0.48233,
+      "MAP@3": 0.56564,
+      "MAP@5": 0.58826,
+      "MAP@10": 0.59593
+    },
+    "recall": {
+      "Recall@1": 0.48233,
+      "Recall@3": 0.66033,
+      "Recall@5": 0.73794,
+      "Recall@10": 0.78333
+    },
+    "precision": {
+      "P@1": 0.50333,
+      "P@3": 0.23778,
+      "P@5": 0.164,
+      "P@10": 0.08833
+    }
+  }
+}

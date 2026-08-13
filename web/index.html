@@ -81,6 +81,7 @@
       </form>
       <div class="hint">Try “distributed systems” or “machine learning”.</div>
       <p class="status" id="status"></p>
+      <p class="status" id="backend"></p>
       <div class="grid">
         <section class="panel">
           <h2>Reading path</h2>
@@ -98,6 +99,7 @@
       }[char]));
       const queryInput = document.getElementById("query");
       const status = document.getElementById("status");
+      const backend = document.getElementById("backend");
       const path = document.getElementById("path");
       const results = document.getElementById("results");
 
@@ -144,6 +146,16 @@
           results.innerHTML = "";
         }
       }
+
+      fetch("/api/stats")
+        .then((response) => response.json())
+        .then((stats) => {
+          backend.textContent = "Backend: " + stats.retrieval_backend +
+            " · " + stats.papers + " indexed works · " + stats.edges + " citation links";
+        })
+        .catch(() => {
+          backend.textContent = "Backend information is unavailable.";
+        });
 
       document.getElementById("search-form").addEventListener("submit", (event) => {
         event.preventDefault();

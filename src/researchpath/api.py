@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
@@ -16,11 +17,14 @@ WEB_PATH = PROJECT_ROOT / "web" / "index.html"
 def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
     """Create the ResearchPath HTTP API."""
 
-    service = ResearchPathService.from_json(data_path)
+    service = ResearchPathService.from_json(
+        data_path,
+        embedding_model=os.getenv("RESEARCHPATH_EMBEDDING_MODEL"),
+    )
     app = FastAPI(
         title="ResearchPath",
         description="An explainable navigator for computer science literature.",
-        version="0.1.0",
+        version="0.2.0",
     )
     app.state.service = service
 
@@ -33,7 +37,7 @@ def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
         return {"status": "ok"}
 
     @app.get("/api/stats")
-    def stats() -> dict[str, int]:
+    def stats() -> dict[str, int | str]:
         return service.stats()
 
     @app.get("/api/search", response_model=list[SearchResult])

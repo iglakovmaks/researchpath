@@ -4,4 +4,4 @@ from researchpath.models import Paper, ReadingPathStep, SearchResult
 
 __all__ = ["Paper", "ReadingPathStep", "SearchResult"]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

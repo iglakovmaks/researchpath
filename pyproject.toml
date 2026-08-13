@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "researchpath"
-version = "0.1.0"
+version = "0.2.0"
 description = "An explainable research navigator for computer science literature."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,6 +25,15 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "ruff>=0.8"
+]
+
+embeddings = [
+    "sentence-transformers>=3.0"
+]
+
+benchmark = [
+    "beir>=2.2.0",
+    "sentence-transformers>=3.0"
 ]
 
 [project.scripts]

@@ -8,8 +8,8 @@ The project is designed as a learning and research tool rather than a
 black-box chatbot. Every recommendation exposes its retrieval scores, matched
 terms, topic metadata, and citation relationships.
 
-> Current status: local MVP with a curated demo corpus, hybrid retrieval,
-> citation-aware path generation, CLI, HTTP API, and a browser interface.
+> Current status: public demo with a curated corpus, hybrid retrieval,
+> citation-aware path generation, CLI, HTTP API, embeddings, and a BEIR result.
 
 ## Why ResearchPath?
 
@@ -18,14 +18,14 @@ ResearchPath tries to answer:
 
 > “What should I read first, what should I read next, and why?”
 
-The first version focuses on transparent algorithms that can be inspected,
-tested, and benchmarked. The next versions will add larger OpenAlex datasets,
-dense embeddings, and a reproducible retrieval benchmark.
+The project combines transparent baselines with an optional dense model so that
+retrieval quality can be inspected locally and measured on a public benchmark.
 
 ## Features
 
 - BM25 lexical retrieval implemented from scratch.
 - TF-IDF vector retrieval as a lightweight local baseline.
+- Optional dense semantic retrieval with Sentence Transformers.
 - Hybrid ranking with separate, inspectable component scores.
 - Citation graph construction from referenced works.
 - Chronological reading-path generation with foundation, core, and frontier
@@ -52,6 +52,32 @@ The demo corpus includes three connected topic areas:
 - Distributed systems.
 - Information retrieval.
 - Machine learning and natural language processing.
+
+To enable dense embeddings locally, install the optional backend and set a
+model name:
+
+~~~bash
+pip install -e ".[embeddings]"
+export RESEARCHPATH_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+researchpath serve
+~~~
+
+The first run downloads the model from Hugging Face and caches it locally.
+The default web deployment uses the lightweight TF-IDF baseline so its Python
+Function stays small and cold starts remain predictable.
+
+Run the reproducible BEIR evaluation:
+
+~~~bash
+pip install -e ".[benchmark]"
+python scripts/benchmark_beir.py --dataset scifact
+~~~
+
+The checked-in full SciFact test-split result uses
+`sentence-transformers/all-MiniLM-L6-v2` over 5,183 documents and 300 queries:
+`NDCG@10 = 0.64508`, `MAP@10 = 0.59593`, and `Recall@10 = 0.78333`.
+See [benchmarks/README.md](benchmarks/README.md) and the JSON result for the
+exact protocol and all reported metrics.
 
 ## Command-line Usage
 
@@ -83,6 +109,8 @@ See the [OpenAlex API reference](https://developers.openalex.org/api-reference/i
 
 ## API
 
+The deployed demo exposes the API and interactive OpenAPI documentation.
+
 When the server is running:
 
 - `GET /health` — service health check.
@@ -102,8 +130,8 @@ OpenAlex / JSON corpus
           │
     ┌─────┴─────┐
     ▼           ▼
- BM25 index   TF-IDF index
-    └─────┬─────┘
+ BM25 index   TF-IDF / embeddings index
+    └─────────┬─────────┘
           ▼
     Hybrid ranking
           │
@@ -123,8 +151,8 @@ signals:
 2. A direct citation relationship with an already selected paper.
 3. Chronological progress through the topic.
 
-This makes the first version easy to understand and gives us a clear baseline
-before experimenting with learned ranking models.
+This keeps the baseline easy to understand while making dense retrieval
+reproducible instead of treating it as an opaque feature.
 
 ## Testing
 
@@ -146,7 +174,9 @@ ruff check .
 - [x] Add transparent BM25 and TF-IDF baselines.
 - [x] Add citation-aware reading paths.
 - [x] Add OpenAlex ingestion.
-- [ ] Add dense embedding retrieval as a separate benchmarked backend.
+- [x] Add optional Sentence Transformer embeddings.
+- [x] Add a BEIR benchmark harness.
+- [ ] Tune dense embedding retrieval as a separate benchmarked backend.
 - [ ] Store larger corpora in SQLite or DuckDB.
 - [ ] Evaluate Recall@k, MRR, nDCG@10, latency, and memory usage.
 - [ ] Compare lexical, vector, and hybrid retrieval on public IR datasets such
@@ -160,10 +190,9 @@ The checked-in dataset is a small, manually curated demo fixture. It is meant
 to make the application reproducible without network access; it is not a
 scientific benchmark.
 
-The current TF-IDF vector index is a transparent retrieval baseline, not a
-modern dense semantic model. The project will only claim an improvement after
-publishing a reproducible experiment with fixed data, queries, metrics, and
-hardware details.
+The public web demo intentionally uses TF-IDF to keep deployment lightweight.
+The dense Sentence Transformer backend is opt-in locally, and its SciFact
+evaluation is checked in with fixed data, queries, metrics, and model details.
 
 ## License
 

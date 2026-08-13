@@ -2,6 +2,16 @@
 
 All notable changes to ResearchPath are documented here.
 
+## [0.2.0] - 2026-08-13
+
+### Added
+
+- Optional Sentence Transformer dense retrieval with query/document encoding.
+- BEIR benchmark harness using the official `EvaluateRetrieval` metrics.
+- Full SciFact test-split result for `all-MiniLM-L6-v2`.
+- Vercel deployment entrypoint and a public web demo configuration.
+- Retrieval backend and corpus statistics in the web UI.
+
 ## [0.1.0] - 2026-08-13
 
 ### Added

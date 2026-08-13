@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from researchpath.embeddings import SentenceTransformerIndex
 from researchpath.models import Paper, SearchResult
 
 TOKEN_RE = re.compile(r"[a-z0-9]+")
@@ -96,11 +97,21 @@ def _normalize(scores: np.ndarray) -> np.ndarray:
 class HybridSearchEngine:
     """Combine lexical BM25 and TF-IDF vector retrieval with explanations."""
 
-    def __init__(self, papers: list[Paper], bm25_weight: float = 0.6):
+    def __init__(
+        self,
+        papers: list[Paper],
+        bm25_weight: float = 0.6,
+        embedding_model: str | None = None,
+    ):
         self.papers = papers
         self.bm25_weight = bm25_weight
         self.bm25 = BM25Index(papers)
-        self.vector = VectorIndex(papers)
+        self.vector = (
+            SentenceTransformerIndex(papers, embedding_model)
+            if embedding_model
+            else VectorIndex(papers)
+        )
+        self.vector_backend = getattr(self.vector, "backend_name", "tf-idf")
         self._by_id = {paper.id: paper for paper in papers}
 
     def get_paper(self, paper_id: str) -> Paper | None:
@@ -128,7 +139,10 @@ class HybridSearchEngine:
             title_terms = set(tokenize(paper.title))
             topic_terms = set(tokenize(" ".join(paper.topics)))
             matched_terms = sorted(query_tokens & set(tokenize(paper.searchable_text)))
-            reasons = ["Hybrid score combines BM25 lexical relevance and TF-IDF vector similarity."]
+            reasons = [
+                "Hybrid score combines BM25 lexical relevance and "
+                f"{self.vector_backend} similarity."
+            ]
             title_matches = sorted(query_tokens & title_terms)
             topic_matches = sorted(query_tokens & topic_terms)
             if title_matches:

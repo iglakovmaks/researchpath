@@ -12,14 +12,18 @@ from researchpath.search import HybridSearchEngine
 class ResearchPathService:
     """Application service that keeps search and graph retrieval consistent."""
 
-    def __init__(self, papers: list[Paper]):
+    def __init__(self, papers: list[Paper], embedding_model: str | None = None):
         self.papers = papers
-        self.search_engine = HybridSearchEngine(papers)
+        self.search_engine = HybridSearchEngine(papers, embedding_model=embedding_model)
         self.graph = CitationGraph(papers)
 
     @classmethod
-    def from_json(cls, path: str | Path) -> ResearchPathService:
-        return cls(load_papers(path))
+    def from_json(
+        cls,
+        path: str | Path,
+        embedding_model: str | None = None,
+    ) -> ResearchPathService:
+        return cls(load_papers(path), embedding_model=embedding_model)
 
     def search(self, query: str, limit: int = 10) -> list[SearchResult]:
         return self.search_engine.search(query=query, limit=limit)
@@ -30,5 +34,9 @@ class ResearchPathService:
     def get_paper(self, paper_id: str) -> Paper | None:
         return self.search_engine.get_paper(paper_id)
 
-    def stats(self) -> dict[str, int]:
-        return {**self.graph.stats(), "papers": len(self.papers)}
+    def stats(self) -> dict[str, int | str]:
+        return {
+            **self.graph.stats(),
+            "papers": len(self.papers),
+            "retrieval_backend": self.search_engine.vector_backend,
+        }
