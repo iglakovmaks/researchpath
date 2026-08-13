@@ -2,6 +2,16 @@
 
 All notable changes to ResearchPath are documented here.
 
+## [0.4.0] - 2026-08-13
+
+### Added
+
+- SQLite corpus store with JSON serialization and FTS5 lookup support.
+- JSON-to-SQLite migration command and SQLite-aware service loading.
+- Cursor-paginated OpenAlex imports with bounded result counts.
+- OpenAlex `mailto` polite-pool support and transient request retries.
+- Storage backend diagnostics in `/api/stats` and the browser interface.
+
 ## [0.3.0] - 2026-08-13
 
 ### Added

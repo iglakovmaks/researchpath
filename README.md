@@ -34,6 +34,7 @@ retrieval quality can be inspected locally and measured on a public benchmark.
 - Chronological reading-path generation with foundation, core, and frontier
   roles.
 - OpenAlex ingestion command for importing real scholarly metadata.
+- SQLite corpus storage with FTS5 and cursor-paginated OpenAlex ingestion.
 - JSON API and a small browser interface.
 - Unit and API tests.
 
@@ -107,6 +108,31 @@ researchpath ingest "retrieval augmented generation" \
   --per-page 25
 researchpath serve --data data/rag.local.json
 ~~~
+
+Store a larger import in SQLite instead of a JSON snapshot:
+
+~~~bash
+researchpath ingest "retrieval augmented generation" \
+  --database data/researchpath.db \
+  --max-results 500 \
+  --per-page 100 \
+  --mailto you@example.org
+researchpath search "dense retrieval" --data data/researchpath.db
+researchpath serve --data data/researchpath.db
+~~~
+
+Convert the checked-in demo corpus to SQLite:
+
+~~~bash
+researchpath migrate \
+  --data data/demo_papers.json \
+  --database data/demo.db
+~~~
+
+OpenAlex cursor pagination is designed for bounded imports. For very large
+exports, use the official OpenAlex snapshot rather than paging the entire
+works endpoint; the API supports cursor pagination beyond the basic 10,000
+result limit. See the [OpenAlex works API](https://developers.openalex.org/api-reference/works/list-works).
 
 OpenAlex provides a public REST API over a connected graph of scholarly works,
 authors, sources, institutions, and topics. ResearchPath normalizes its work
@@ -185,7 +211,8 @@ ruff check .
 - [x] Add a BEIR benchmark harness.
 - [x] Compare BM25, TF-IDF, dense, and hybrid retrieval on SciFact.
 - [x] Add public browser-side dense search.
-- [ ] Store larger corpora in SQLite or DuckDB.
+- [x] Store normalized corpora in SQLite with an FTS5 index.
+- [x] Add cursor-paginated OpenAlex ingestion.
 - [ ] Tune dense embedding retrieval as a separate benchmarked backend.
 - [ ] Add interactive benchmark and citation-graph visualizations.
 - [ ] Add bilingual query support for English and Russian.
@@ -198,8 +225,8 @@ scientific benchmark.
 
 The public web demo uses TF-IDF on the server and browser-side MiniLM for dense
 search. The checked-in browser index covers the small curated corpus; larger
-OpenAlex imports still use the local Python embedding backend or a future
-vector database.
+OpenAlex imports use SQLite for durable metadata and still build retrieval
+indexes in memory. A future release can add ANN/vector-database indexing.
 
 ## License
 

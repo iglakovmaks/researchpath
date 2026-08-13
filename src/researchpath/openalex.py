@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 from typing import Any
 
 import httpx
@@ -70,31 +71,96 @@ class OpenAlexClient:
         base_url: str = OPENALEX_API_URL,
         api_key: str | None = None,
         timeout: float = 20.0,
+        mailto: str | None = None,
+        client: httpx.Client | None = None,
+        max_retries: int = 3,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key or os.getenv("OPENALEX_API_KEY")
         self.timeout = timeout
+        self.mailto = mailto or os.getenv("OPENALEX_MAILTO")
+        self.client = client or httpx.Client()
+        self.max_retries = max(0, max_retries)
 
-    def search(self, query: str, per_page: int = 25) -> list[Paper]:
+    def _request(self, params: dict[str, str | int]) -> dict[str, Any]:
+        """Request a page with polite-pool headers and transient retries."""
+
+        request_params = dict(params)
+        if self.api_key:
+            request_params["api_key"] = self.api_key
+        if self.mailto:
+            request_params["mailto"] = self.mailto
+
+        headers = {"User-Agent": "ResearchPath/0.4 (literature-navigation-tool)"}
+        for attempt in range(self.max_retries + 1):
+            response = self.client.get(
+                f"{self.base_url}/works",
+                params=request_params,
+                headers=headers,
+                timeout=self.timeout,
+            )
+            if response.status_code != 429 and response.status_code < 500:
+                response.raise_for_status()
+                return response.json()
+            if attempt == self.max_retries:
+                response.raise_for_status()
+            time.sleep(2**attempt)
+        raise RuntimeError("OpenAlex request retry loop exited unexpectedly")
+
+    def search(
+        self,
+        query: str,
+        per_page: int = 25,
+        *,
+        filter_query: str | None = None,
+        sort: str | None = None,
+    ) -> list[Paper]:
         """Search OpenAlex and return normalized works."""
 
         params: dict[str, str | int] = {
             "search": query,
             "per_page": min(max(per_page, 1), 100),
         }
-        if self.api_key:
-            params["api_key"] = self.api_key
-
-        headers = {"User-Agent": "ResearchPath/0.1 (literature-navigation-demo)"}
-        response = httpx.get(
-            f"{self.base_url}/works",
-            params=params,
-            headers=headers,
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        payload = response.json()
+        if filter_query:
+            params["filter"] = filter_query
+        if sort:
+            params["sort"] = sort
+        payload = self._request(params)
         return [normalize_openalex_work(work) for work in payload.get("results", [])]
+
+    def search_all(
+        self,
+        query: str,
+        max_results: int = 100,
+        per_page: int = 100,
+        *,
+        filter_query: str | None = None,
+        sort: str | None = None,
+    ) -> list[Paper]:
+        """Search with OpenAlex cursor pagination up to ``max_results``."""
+
+        target = max(0, max_results)
+        if target == 0:
+            return []
+        papers: list[Paper] = []
+        cursor = "*"
+        while len(papers) < target and cursor:
+            params: dict[str, str | int] = {
+                "search": query,
+                "per_page": min(max(per_page, 1), 100),
+                "cursor": cursor,
+            }
+            if filter_query:
+                params["filter"] = filter_query
+            if sort:
+                params["sort"] = sort
+            payload = self._request(params)
+            results = payload.get("results", [])
+            papers.extend(normalize_openalex_work(work) for work in results)
+            cursor = payload.get("meta", {}).get("next_cursor")
+            if not results:
+                break
+        return papers[:target]
 
     def search_to_file(
         self,
@@ -107,3 +173,27 @@ class OpenAlexClient:
         papers = self.search(query=query, per_page=per_page)
         save_papers(papers, output_path)
         return papers
+
+    def search_to_sqlite(
+        self,
+        query: str,
+        database_path: str,
+        max_results: int = 100,
+        per_page: int = 100,
+        *,
+        filter_query: str | None = None,
+        sort: str | None = None,
+    ) -> int:
+        """Cursor-page OpenAlex results and upsert them into SQLite."""
+
+        from researchpath.corpus import SQLiteCorpusStore
+
+        papers = self.search_all(
+            query=query,
+            max_results=max_results,
+            per_page=per_page,
+            filter_query=filter_query,
+            sort=sort,
+        )
+        with SQLiteCorpusStore(database_path) as store:
+            return store.upsert_many(papers)

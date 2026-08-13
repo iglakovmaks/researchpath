@@ -19,14 +19,14 @@ WEB_PATH = PROJECT_ROOT / "web" / "index.html"
 def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
     """Create the ResearchPath HTTP API."""
 
-    service = ResearchPathService.from_json(
+    service = ResearchPathService.from_path(
         data_path,
         embedding_model=os.getenv("RESEARCHPATH_EMBEDDING_MODEL"),
     )
     app = FastAPI(
         title="ResearchPath",
         description="An explainable navigator for computer science literature.",
-        version="0.3.0",
+        version="0.4.0",
     )
     app.state.service = service
 

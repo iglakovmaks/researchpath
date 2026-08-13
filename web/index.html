@@ -214,7 +214,8 @@
         .then((stats) => {
           backend.textContent = "Backend: " + stats.retrieval_backend +
             " · " + stats.papers + " indexed works · " + stats.edges +
-            " citation links · dense browser mode available";
+            " citation links · " + stats.storage_backend +
+            " storage · dense browser mode available";
         })
         .catch(() => {
           backend.textContent = "Backend information is unavailable.";

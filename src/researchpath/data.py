@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from researchpath.corpus import SQLiteCorpusStore
 from researchpath.models import Paper
 
 
@@ -31,3 +32,13 @@ def save_papers(papers: list[Paper], path: str | Path) -> None:
         + "\n",
         encoding="utf-8",
     )
+
+
+def load_papers_from_path(path: str | Path) -> tuple[list[Paper], str]:
+    """Load a JSON or SQLite corpus and report its storage backend."""
+
+    corpus_path = Path(path)
+    if corpus_path.suffix.lower() in {".db", ".sqlite", ".sqlite3"}:
+        with SQLiteCorpusStore(corpus_path) as store:
+            return store.all_papers(), store.backend_name
+    return load_papers(corpus_path), "json"
