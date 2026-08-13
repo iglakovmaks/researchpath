@@ -11,7 +11,7 @@ def load_papers(path: str | Path) -> list[Paper]:
 
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
     if not isinstance(payload, list):
-        raise ValueError(f"Expected a JSON list in {path}")
+        raise TypeError(f"Expected a JSON list in {path}")
     validator = getattr(Paper, "model_validate", Paper.parse_obj)
     return [validator(item) for item in payload]
 

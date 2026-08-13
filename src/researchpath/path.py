@@ -45,7 +45,10 @@ def build_reading_path(
         remaining = [candidate for candidate in candidates if candidate not in selected]
         previous_year = selected[-1].paper.publication_year
 
-        def selection_score(candidate: SearchResult) -> float:
+        def selection_score(
+            candidate: SearchResult,
+            previous_year: int = previous_year,
+        ) -> float:
             relevance = candidate.final_score
             connection = min(
                 _connection_count(candidate, selected, graph) / max(len(selected), 1),
