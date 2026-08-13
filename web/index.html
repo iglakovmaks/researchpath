@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ResearchPath</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --background: #0d1117;
+        --panel: #161b22;
+        --border: #30363d;
+        --muted: #8b949e;
+        --text: #e6edf3;
+        --accent: #58a6ff;
+        --green: #3fb950;
+        --orange: #d29922;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: radial-gradient(circle at top right, #17243b, var(--background) 42%);
+        color: var(--text);
+        font: 16px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, sans-serif;
+      }
+      main { max-width: 1040px; margin: 0 auto; padding: 64px 24px; }
+      h1 { font-size: clamp(2.4rem, 6vw, 4.8rem); line-height: 1; margin: 0 0 18px; }
+      h2 { margin-top: 0; }
+      .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+      .lead { max-width: 720px; color: var(--muted); font-size: 1.15rem; }
+      .search-box, .panel, .paper {
+        background: color-mix(in srgb, var(--panel) 94%, transparent);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+      }
+      .search-box { display: flex; gap: 12px; margin: 32px 0 18px; padding: 10px; }
+      input {
+        flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+        color: var(--text); font: inherit; padding: 12px;
+      }
+      button {
+        border: 0; border-radius: 9px; background: var(--accent); color: #06101d;
+        cursor: pointer; font: inherit; font-weight: 700; padding: 0 18px;
+      }
+      button:hover { filter: brightness(1.1); }
+      .hint, .status { color: var(--muted); font-size: .92rem; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 24px; }
+      .panel { padding: 22px; }
+      .paper { padding: 16px; margin: 12px 0; }
+      .paper h3 { margin: 0 0 6px; font-size: 1rem; }
+      .paper h3 a { color: var(--text); text-decoration: none; }
+      .paper h3 a:hover { color: var(--accent); }
+      .meta { color: var(--muted); font-size: .85rem; }
+      .tag { display: inline-block; color: var(--accent); font-size: .78rem; margin: 8px 8px 0 0; }
+      .score { color: var(--green); float: right; font-size: .8rem; }
+      .step { border-left: 2px solid var(--accent); padding-left: 14px; margin: 18px 0; }
+      .role { color: var(--orange); font-size: .78rem; font-weight: 700; text-transform: uppercase; }
+      .empty { color: var(--muted); padding: 18px 0; }
+      @media (max-width: 760px) {
+        main { padding: 40px 16px; }
+        .grid { grid-template-columns: 1fr; }
+        .search-box { flex-direction: column; }
+        button { min-height: 46px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">ResearchPath · local demo</div>
+      <h1>Find your way into a research topic.</h1>
+      <p class="lead">
+        Search computer science literature and get a transparent reading path
+        from foundations to the frontier. Every recommendation exposes its
+        retrieval evidence.
+      </p>
+      <form class="search-box" id="search-form">
+        <input id="query" value="information retrieval" aria-label="Research question"
+          placeholder="Try: distributed systems, information retrieval..." />
+        <button type="submit">Explore topic</button>
+      </form>
+      <div class="hint">Try “distributed systems” or “machine learning”.</div>
+      <p class="status" id="status"></p>
+      <div class="grid">
+        <section class="panel">
+          <h2>Reading path</h2>
+          <div id="path"><div class="empty">Search a topic to build a path.</div></div>
+        </section>
+        <section class="panel">
+          <h2>Relevant works</h2>
+          <div id="results"><div class="empty">Search a topic to see ranked papers.</div></div>
+        </section>
+      </div>
+    </main>
+    <script>
+      const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+      }[char]));
+      const queryInput = document.getElementById("query");
+      const status = document.getElementById("status");
+      const path = document.getElementById("path");
+      const results = document.getElementById("results");
+
+      const paperHtml = (paper, score) => {
+        const scoreHtml = score === undefined ? "" :
+          '<span class="score">' + escapeHtml(Number(score).toFixed(3)) + "</span>";
+        const link = escapeHtml(paper.open_access_url || paper.doi || "#");
+        const authors = escapeHtml((paper.authors || []).slice(0, 3).join(", ") || "Unknown authors");
+        const tags = (paper.topics || []).slice(0, 3).map((topic) =>
+          '<span class="tag">#' + escapeHtml(topic) + "</span>").join("");
+        return '<article class="paper">' + scoreHtml +
+          '<h3><a href="' + link + '" target="_blank" rel="noreferrer">' +
+          escapeHtml(paper.title) + "</a></h3>" +
+          '<div class="meta">' + escapeHtml(paper.publication_year) + " · " + authors + "</div>" +
+          "<div>" + tags + "</div></article>";
+      };
+
+      async function explore(query) {
+        status.textContent = "Ranking papers and tracing citation links…";
+        path.innerHTML = "";
+        results.innerHTML = "";
+        try {
+          const pathResponse = await fetch("/api/reading-path?q=" +
+            encodeURIComponent(query) + "&limit=6");
+          const searchResponse = await fetch("/api/search?q=" +
+            encodeURIComponent(query) + "&limit=8");
+          if (!pathResponse.ok || !searchResponse.ok) throw new Error("Search failed");
+          const pathData = await pathResponse.json();
+          const searchData = await searchResponse.json();
+          path.innerHTML = pathData.length ? pathData.map((step) =>
+            '<div class="step"><div class="role">' + escapeHtml(step.position) +
+            " · " + escapeHtml(step.role) + "</div>" +
+            paperHtml(step.paper, step.score) +
+            '<div class="meta">' + escapeHtml(step.reason) + "</div></div>").join("") :
+            '<div class="empty">No path found.</div>';
+          results.innerHTML = searchData.length ? searchData.map((item) =>
+            paperHtml(item.paper, item.final_score)).join("") :
+            '<div class="empty">No matching papers found.</div>';
+          status.textContent = "Found " + searchData.length +
+            " works in the local demo corpus.";
+        } catch (error) {
+          status.textContent = "Could not reach the ResearchPath API.";
+          path.innerHTML = '<div class="empty">Start the API with <code>researchpath serve</code>.</div>';
+          results.innerHTML = "";
+        }
+      }
+
+      document.getElementById("search-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const query = queryInput.value.trim();
+        if (query.length >= 2) explore(query);
+      });
+      explore(queryInput.value);
+    </script>
+  </body>
+</html>

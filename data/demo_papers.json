@@ -1,0 +1,178 @@
+[
+  {
+    "id": "demo-gfs",
+    "title": "The Google File System",
+    "abstract": "A scalable distributed file system designed for large data-intensive applications. It explores fault tolerance, sequential access, and the trade-offs required when storage is built from commodity machines.",
+    "publication_year": 2003,
+    "authors": ["Sanjay Ghemawat", "Howard Gobioff", "Shun-Tak Leung"],
+    "topics": ["distributed systems", "storage", "fault tolerance"],
+    "cited_by_count": 18000,
+    "referenced_works": [],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-mapreduce",
+    "title": "MapReduce: Simplified Data Processing on Large Clusters",
+    "abstract": "A programming model and execution system for processing very large data sets with parallel operations across clusters. The abstraction hides scheduling, failures, and data distribution from the programmer.",
+    "publication_year": 2004,
+    "authors": ["Jeffrey Dean", "Sanjay Ghemawat"],
+    "topics": ["distributed systems", "data processing", "parallel computing"],
+    "cited_by_count": 26000,
+    "referenced_works": ["demo-gfs"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-bigtable",
+    "title": "Bigtable: A Distributed Storage System for Structured Data",
+    "abstract": "A distributed storage system for structured data that provides high availability and scalability. The design combines a sparse data model with a distributed file system and a coordination service.",
+    "publication_year": 2006,
+    "authors": ["Fay Chang", "Jeffrey Dean", "Sanjay Ghemawat"],
+    "topics": ["distributed systems", "databases", "storage"],
+    "cited_by_count": 14000,
+    "referenced_works": ["demo-gfs", "demo-mapreduce"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-dynamo",
+    "title": "Dynamo: Amazon's Highly Available Key-value Store",
+    "abstract": "A highly available key-value storage system that uses partitioning, replication, and eventual consistency. It studies how large-scale services remain available during failures and network partitions.",
+    "publication_year": 2007,
+    "authors": ["Giuseppe DeCandia", "Deniz Hastorun", "Madan Vukolić"],
+    "topics": ["distributed systems", "databases", "consistency"],
+    "cited_by_count": 12000,
+    "referenced_works": ["demo-gfs", "demo-bigtable"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-spanner",
+    "title": "Spanner: Google's Globally Distributed Database",
+    "abstract": "A globally distributed database that combines transactions, strong consistency, and geographic scale. The system uses synchronized time and carefully designed replication to coordinate data across regions.",
+    "publication_year": 2012,
+    "authors": ["James C. Corbett", "Jeffrey Dean", "Michael Epstein"],
+    "topics": ["distributed systems", "databases", "consistency"],
+    "cited_by_count": 9000,
+    "referenced_works": ["demo-bigtable", "demo-dynamo"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-ray",
+    "title": "Ray: A Distributed Framework for Emerging AI Applications",
+    "abstract": "A distributed framework for scaling machine learning and reinforcement learning applications. It provides a flexible programming model for stateful computation, scheduling, and fault-tolerant execution.",
+    "publication_year": 2018,
+    "authors": ["Philipp Moritz", "Robert Nishihara", "Stephanie Wang"],
+    "topics": ["distributed systems", "machine learning systems", "parallel computing"],
+    "cited_by_count": 5000,
+    "referenced_works": ["demo-mapreduce", "demo-spanner"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-okapi",
+    "title": "Okapi at TREC-3",
+    "abstract": "An evaluation of probabilistic text retrieval methods and the Okapi system. It helped establish practical relevance ranking techniques for large document collections.",
+    "publication_year": 1994,
+    "authors": ["Stephen E. Robertson", "Steve Walker"],
+    "topics": ["information retrieval", "search", "ranking"],
+    "cited_by_count": 4200,
+    "referenced_works": [],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-pagerank",
+    "title": "The PageRank Citation Ranking: Bringing Order to the Web",
+    "abstract": "A link-analysis method that estimates the importance of web pages from the structure of hyperlinks. The approach connects graph centrality with information retrieval and search quality.",
+    "publication_year": 1998,
+    "authors": ["Sergey Brin", "Lawrence Page", "Rajeev Motwani"],
+    "topics": ["information retrieval", "graphs", "ranking"],
+    "cited_by_count": 30000,
+    "referenced_works": ["demo-okapi"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-learning-to-rank",
+    "title": "Learning to Rank for Information Retrieval",
+    "abstract": "A machine learning perspective on ranking documents for search. It connects feature engineering, pairwise preferences, and evaluation metrics with practical information retrieval systems.",
+    "publication_year": 2010,
+    "authors": ["Tie-Yan Liu"],
+    "topics": ["information retrieval", "machine learning", "ranking"],
+    "cited_by_count": 11000,
+    "referenced_works": ["demo-okapi", "demo-pagerank"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-dpr",
+    "title": "Dense Passage Retrieval for Open-Domain Question Answering",
+    "abstract": "A dense retrieval approach that represents questions and passages in a shared vector space. It demonstrates how learned representations can retrieve relevant passages without exact keyword overlap.",
+    "publication_year": 2020,
+    "authors": ["Vladimir Karpukhin", "Barlas Oğuz", "Sewon Min"],
+    "topics": ["information retrieval", "natural language processing", "representation learning"],
+    "cited_by_count": 5000,
+    "referenced_works": ["demo-okapi", "demo-learning-to-rank"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-beir",
+    "title": "BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of Information Retrieval Models",
+    "abstract": "A benchmark for evaluating information retrieval models across diverse domains and tasks. It makes it possible to compare lexical, dense, and hybrid retrieval methods under a common evaluation protocol.",
+    "publication_year": 2021,
+    "authors": ["Nandan Thakur", "Nils Reuangrithsetthakorn", "James Thorne"],
+    "topics": ["information retrieval", "machine learning", "evaluation"],
+    "cited_by_count": 2500,
+    "referenced_works": ["demo-dpr", "demo-learning-to-rank"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-deep-learning",
+    "title": "Deep Learning",
+    "abstract": "A broad foundation for representation learning with neural networks. It explains how multilayer models learn useful features for perception, language, and sequential data.",
+    "publication_year": 2015,
+    "authors": ["Yoshua Bengio", "Ian Goodfellow", "Aaron Courville"],
+    "topics": ["machine learning", "deep learning", "representation learning"],
+    "cited_by_count": 22000,
+    "referenced_works": [],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-transformer",
+    "title": "Attention Is All You Need",
+    "abstract": "A sequence transduction architecture based entirely on attention mechanisms. The Transformer removes recurrence and convolution while improving parallelization and long-range dependency modeling.",
+    "publication_year": 2017,
+    "authors": ["Ashish Vaswani", "Noam Shazeer", "Niki Parmar"],
+    "topics": ["machine learning", "natural language processing", "attention"],
+    "cited_by_count": 50000,
+    "referenced_works": ["demo-deep-learning"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-bert",
+    "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+    "abstract": "A language representation model that pre-trains bidirectional Transformer encoders on unlabeled text and adapts them to downstream language understanding tasks.",
+    "publication_year": 2018,
+    "authors": ["Jacob Devlin", "Ming-Wei Chang", "Kenton Lee"],
+    "topics": ["machine learning", "natural language processing", "language models"],
+    "cited_by_count": 40000,
+    "referenced_works": ["demo-transformer"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-rag",
+    "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+    "abstract": "A method that combines a parametric language model with a non-parametric dense index. Retrieved evidence can improve performance on knowledge-intensive tasks and make updates easier.",
+    "publication_year": 2020,
+    "authors": ["Patrick Lewis", "Ethan Perez", "Aleksandra Piktus"],
+    "topics": ["machine learning", "natural language processing", "information retrieval"],
+    "cited_by_count": 9000,
+    "referenced_works": ["demo-transformer", "demo-dpr"],
+    "source": "curated-demo"
+  },
+  {
+    "id": "demo-efficient-transformer",
+    "title": "Efficient Transformers: A Survey",
+    "abstract": "A survey of methods that reduce the computational and memory cost of Transformer models. It organizes sparse attention, low-rank approximations, and linear attention by their systems trade-offs.",
+    "publication_year": 2021,
+    "authors": ["Yi Tay", "Mostafa Dehghani", "Donald Metzler"],
+    "topics": ["machine learning", "natural language processing", "systems"],
+    "cited_by_count": 3200,
+    "referenced_works": ["demo-transformer", "demo-bert"],
+    "source": "curated-demo"
+  }
+]
