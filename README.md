@@ -11,6 +11,8 @@ terms, topic metadata, and citation relationships.
 > Current status: public demo with a curated corpus, hybrid retrieval,
 > citation-aware path generation, CLI, HTTP API, embeddings, and a BEIR result.
 
+Live demo: <https://researchpath-two.vercel.app>
+
 ## Why ResearchPath?
 
 Finding papers is easy. Understanding how a field developed is harder.

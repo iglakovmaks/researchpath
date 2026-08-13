@@ -29,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--version",
         action="version",
-        version="ResearchPath 0.2.0",
+        version="ResearchPath 0.2.1",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 

@@ -2,6 +2,14 @@
 
 All notable changes to ResearchPath are documented here.
 
+## [0.2.1] - 2026-08-13
+
+### Fixed
+
+- Added the `src` package path to the Vercel Python entrypoint so the public
+  FastAPI Function imports correctly at runtime.
+- Documented the live demo URL.
+
 ## [0.2.0] - 2026-08-13
 
 ### Added
