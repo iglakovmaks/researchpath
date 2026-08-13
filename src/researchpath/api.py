@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -11,6 +12,7 @@ from researchpath.service import ResearchPathService
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATA_PATH = PROJECT_ROOT / "data" / "demo_papers.json"
+EMBEDDING_INDEX_PATH = PROJECT_ROOT / "data" / "demo_embeddings.json"
 WEB_PATH = PROJECT_ROOT / "web" / "index.html"
 
 
@@ -24,7 +26,7 @@ def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
     app = FastAPI(
         title="ResearchPath",
         description="An explainable navigator for computer science literature.",
-        version="0.2.1",
+        version="0.3.0",
     )
     app.state.service = service
 
@@ -44,8 +46,12 @@ def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
     def search(
         q: str = Query(min_length=2, description="Topic or research question."),
         limit: int = Query(default=10, ge=1, le=50),
+        mode: Literal["hybrid", "bm25", "vector"] = Query(
+            default="hybrid",
+            description="Retrieval mode: hybrid, bm25, or vector.",
+        ),
     ) -> list[SearchResult]:
-        return service.search(q, limit)
+        return service.search(q, limit, mode=mode)
 
     @app.get("/api/reading-path", response_model=list[ReadingPathStep])
     def reading_path(
@@ -60,6 +66,14 @@ def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
         if found is None:
             raise HTTPException(status_code=404, detail="Paper not found")
         return found
+
+    @app.get("/api/papers", response_model=list[Paper])
+    def papers() -> list[Paper]:
+        return service.papers
+
+    @app.get("/api/embedding-index", include_in_schema=False)
+    def embedding_index() -> FileResponse:
+        return FileResponse(EMBEDDING_INDEX_PATH, media_type="application/json")
 
     return app
 

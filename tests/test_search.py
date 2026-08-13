@@ -25,6 +25,16 @@ def test_search_is_empty_for_unknown_query() -> None:
     assert HybridSearchEngine(papers).search("quantum bicycles", limit=5) == []
 
 
+def test_search_supports_each_server_side_retrieval_mode() -> None:
+    papers = load_papers(DATA_PATH)
+    engine = HybridSearchEngine(papers)
+
+    for mode in ("bm25", "vector", "hybrid"):
+        results = engine.search("information retrieval", limit=3, mode=mode)
+        assert results
+        assert results[0].reasons
+
+
 def test_reading_path_progresses_through_a_citation_graph() -> None:
     papers = load_papers(DATA_PATH)
     engine = HybridSearchEngine(papers)

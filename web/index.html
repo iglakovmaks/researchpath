@@ -35,6 +35,10 @@
         border-radius: 14px;
       }
       .search-box { display: flex; gap: 12px; margin: 32px 0 18px; padding: 10px; }
+      select {
+        border: 1px solid var(--border); border-radius: 9px; background: var(--background);
+        color: var(--text); font: inherit; padding: 0 12px;
+      }
       input {
         flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
         color: var(--text); font: inherit; padding: 12px;
@@ -77,9 +81,15 @@
       <form class="search-box" id="search-form">
         <input id="query" value="information retrieval" aria-label="Research question"
           placeholder="Try: distributed systems, information retrieval..." />
+        <select id="mode" aria-label="Retrieval mode">
+          <option value="hybrid">Hybrid API</option>
+          <option value="bm25">BM25 API</option>
+          <option value="vector">TF-IDF API</option>
+          <option value="dense-browser">Dense embeddings (browser)</option>
+        </select>
         <button type="submit">Explore topic</button>
       </form>
-      <div class="hint">Try “distributed systems” or “machine learning”.</div>
+      <div class="hint">Try “distributed systems” or “machine learning”. Dense mode downloads a small model once and runs locally in your browser.</div>
       <p class="status" id="status"></p>
       <p class="status" id="backend"></p>
       <div class="grid">
@@ -93,15 +103,60 @@
         </section>
       </div>
     </main>
-    <script>
+    <script type="module">
+      const BROWSER_MODEL = "Xenova/all-MiniLM-L6-v2";
       const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
       }[char]));
       const queryInput = document.getElementById("query");
+      const modeInput = document.getElementById("mode");
       const status = document.getElementById("status");
       const backend = document.getElementById("backend");
       const path = document.getElementById("path");
       const results = document.getElementById("results");
+      let denseResourcesPromise;
+      let extractorPromise;
+
+      async function denseSearch(query, limit) {
+        if (!denseResourcesPromise) {
+          denseResourcesPromise = Promise.all([
+            fetch("/api/papers").then((response) => response.json()),
+            fetch("/api/embedding-index").then((response) => response.json())
+          ]);
+        }
+        const [papers, embeddingIndex] = await denseResourcesPromise;
+        if (!extractorPromise) {
+          status.textContent = "Loading the browser embedding model…";
+          const { pipeline } = await import(
+            "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.0.1"
+          );
+          extractorPromise = pipeline("feature-extraction", BROWSER_MODEL);
+        }
+        const extractor = await extractorPromise;
+        status.textContent = "Encoding the query locally in your browser…";
+        const output = await extractor(query, { pooling: "mean", normalize: true });
+        const queryEmbedding = output.data;
+        const embeddingsById = new Map(
+          embeddingIndex.papers.map((item) => [item.id, item.embedding])
+        );
+        return papers.map((paper) => {
+          const documentEmbedding = embeddingsById.get(paper.id) || [];
+          const score = documentEmbedding.reduce(
+            (total, value, index) => total + value * queryEmbedding[index], 0
+          );
+          return {
+            paper,
+            bm25_score: 0,
+            vector_score: score,
+            final_score: score,
+            matched_terms: [],
+            reasons: [
+              "Dense embedding search runs locally in your browser with " +
+              BROWSER_MODEL + "."
+            ]
+          };
+        }).sort((left, right) => right.final_score - left.final_score).slice(0, limit);
+      }
 
       const paperHtml = (paper, score) => {
         const scoreHtml = score === undefined ? "" :
@@ -118,17 +173,23 @@
       };
 
       async function explore(query) {
+        const selectedMode = modeInput.value;
         status.textContent = "Ranking papers and tracing citation links…";
         path.innerHTML = "";
         results.innerHTML = "";
         try {
           const pathResponse = await fetch("/api/reading-path?q=" +
             encodeURIComponent(query) + "&limit=6");
-          const searchResponse = await fetch("/api/search?q=" +
-            encodeURIComponent(query) + "&limit=8");
-          if (!pathResponse.ok || !searchResponse.ok) throw new Error("Search failed");
+          const searchData = selectedMode === "dense-browser" ?
+            await denseSearch(query, 8) :
+            await fetch("/api/search?q=" + encodeURIComponent(query) +
+              "&limit=8&mode=" + encodeURIComponent(selectedMode))
+              .then((response) => {
+                if (!response.ok) throw new Error("Search failed");
+                return response.json();
+              });
+          if (!pathResponse.ok) throw new Error("Path failed");
           const pathData = await pathResponse.json();
-          const searchData = await searchResponse.json();
           path.innerHTML = pathData.length ? pathData.map((step) =>
             '<div class="step"><div class="role">' + escapeHtml(step.position) +
             " · " + escapeHtml(step.role) + "</div>" +
@@ -138,8 +199,9 @@
           results.innerHTML = searchData.length ? searchData.map((item) =>
             paperHtml(item.paper, item.final_score)).join("") :
             '<div class="empty">No matching papers found.</div>';
-          status.textContent = "Found " + searchData.length +
-            " works in the local demo corpus.";
+          status.textContent = selectedMode === "dense-browser" ?
+            "Dense-ranked " + searchData.length + " works locally in your browser." :
+            "Found " + searchData.length + " works in the local demo corpus.";
         } catch (error) {
           status.textContent = "Could not reach the ResearchPath API.";
           path.innerHTML = '<div class="empty">Start the API with <code>researchpath serve</code>.</div>';
@@ -151,7 +213,8 @@
         .then((response) => response.json())
         .then((stats) => {
           backend.textContent = "Backend: " + stats.retrieval_backend +
-            " · " + stats.papers + " indexed works · " + stats.edges + " citation links";
+            " · " + stats.papers + " indexed works · " + stats.edges +
+            " citation links · dense browser mode available";
         })
         .catch(() => {
           backend.textContent = "Backend information is unavailable.";

@@ -1,0 +1,132 @@
+{
+  "dataset": "scifact",
+  "split": "test",
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "backends": [
+    "bm25",
+    "tfidf",
+    "dense",
+    "hybrid"
+  ],
+  "corpus_size": 5183,
+  "query_count": 300,
+  "truncated": false,
+  "results": {
+    "bm25": {
+      "retrieval_seconds": 14.268,
+      "metrics": {
+        "ndcg": {
+          "NDCG@1": 0.54333,
+          "NDCG@3": 0.62601,
+          "NDCG@5": 0.6418,
+          "NDCG@10": 0.66439
+        },
+        "map": {
+          "MAP@1": 0.52483,
+          "MAP@3": 0.59997,
+          "MAP@5": 0.60992,
+          "MAP@10": 0.62096
+        },
+        "recall": {
+          "Recall@1": 0.52483,
+          "Recall@3": 0.68067,
+          "Recall@5": 0.71928,
+          "Recall@10": 0.78161
+        },
+        "precision": {
+          "P@1": 0.54333,
+          "P@3": 0.24111,
+          "P@5": 0.15533,
+          "P@10": 0.08667
+        }
+      }
+    },
+    "tfidf": {
+      "retrieval_seconds": 2.886,
+      "metrics": {
+        "ndcg": {
+          "NDCG@1": 0.50333,
+          "NDCG@3": 0.59707,
+          "NDCG@5": 0.62597,
+          "NDCG@10": 0.64176
+        },
+        "map": {
+          "MAP@1": 0.485,
+          "MAP@3": 0.56676,
+          "MAP@5": 0.58468,
+          "MAP@10": 0.59169
+        },
+        "recall": {
+          "Recall@1": 0.485,
+          "Recall@3": 0.66528,
+          "Recall@5": 0.73417,
+          "Recall@10": 0.779
+        },
+        "precision": {
+          "P@1": 0.50333,
+          "P@3": 0.23556,
+          "P@5": 0.158,
+          "P@10": 0.08533
+        }
+      }
+    },
+    "dense": {
+      "retrieval_seconds": 34.661,
+      "metrics": {
+        "ndcg": {
+          "NDCG@1": 0.50333,
+          "NDCG@3": 0.59673,
+          "NDCG@5": 0.62928,
+          "NDCG@10": 0.64508
+        },
+        "map": {
+          "MAP@1": 0.48233,
+          "MAP@3": 0.56564,
+          "MAP@5": 0.58826,
+          "MAP@10": 0.59593
+        },
+        "recall": {
+          "Recall@1": 0.48233,
+          "Recall@3": 0.66033,
+          "Recall@5": 0.73794,
+          "Recall@10": 0.78333
+        },
+        "precision": {
+          "P@1": 0.50333,
+          "P@3": 0.23778,
+          "P@5": 0.164,
+          "P@10": 0.08833
+        }
+      }
+    },
+    "hybrid": {
+      "retrieval_seconds": 17.183,
+      "metrics": {
+        "ndcg": {
+          "NDCG@1": 0.59667,
+          "NDCG@3": 0.67196,
+          "NDCG@5": 0.69355,
+          "NDCG@10": 0.71394
+        },
+        "map": {
+          "MAP@1": 0.574,
+          "MAP@3": 0.64574,
+          "MAP@5": 0.66019,
+          "MAP@10": 0.67019
+        },
+        "recall": {
+          "Recall@1": 0.574,
+          "Recall@3": 0.72328,
+          "Recall@5": 0.7745,
+          "Recall@10": 0.83322
+        },
+        "precision": {
+          "P@1": 0.59667,
+          "P@3": 0.25889,
+          "P@5": 0.17,
+          "P@10": 0.093
+        }
+      }
+    }
+  }
+}

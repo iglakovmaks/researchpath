@@ -25,11 +25,23 @@ class ResearchPathService:
     ) -> ResearchPathService:
         return cls(load_papers(path), embedding_model=embedding_model)
 
-    def search(self, query: str, limit: int = 10) -> list[SearchResult]:
-        return self.search_engine.search(query=query, limit=limit)
+    def search(
+        self,
+        query: str,
+        limit: int = 10,
+        mode: str = "hybrid",
+    ) -> list[SearchResult]:
+        return self.search_engine.search(query=query, limit=limit, mode=mode)
 
-    def reading_path(self, query: str, limit: int = 6) -> list[ReadingPathStep]:
-        return build_reading_path(self.search(query, limit=max(limit * 4, 10)), self.graph, limit)
+    def reading_path(
+        self,
+        query: str,
+        limit: int = 6,
+        mode: str = "hybrid",
+    ) -> list[ReadingPathStep]:
+        return build_reading_path(
+            self.search(query, limit=max(limit * 4, 10), mode=mode), self.graph, limit
+        )
 
     def get_paper(self, paper_id: str) -> Paper | None:
         return self.search_engine.get_paper(paper_id)

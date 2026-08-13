@@ -26,6 +26,11 @@ def test_api_exposes_search_path_and_health() -> None:
     assert stats["papers"] == 16
     assert stats["retrieval_backend"] == "tf-idf"
     assert request(app, "GET", "/api/search?q=machine%20learning").status_code == 200
+    assert request(app, "GET", "/api/search?q=machine%20learning&mode=bm25").status_code == 200
+    assert len(request(app, "GET", "/api/papers").json()) == 16
+    embedding_index = request(app, "GET", "/api/embedding-index")
+    assert embedding_index.status_code == 200
+    assert embedding_index.json()["dimensions"] == 384
     path_response = request(app, "GET", "/api/reading-path?q=machine%20learning&limit=4")
     assert path_response.status_code == 200
     assert len(path_response.json()) == 4

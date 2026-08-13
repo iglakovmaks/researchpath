@@ -2,6 +2,17 @@
 
 All notable changes to ResearchPath are documented here.
 
+## [0.3.0] - 2026-08-13
+
+### Added
+
+- Server-side BM25, vector, and hybrid retrieval modes through the API.
+- Browser-side dense search using the MiniLM ONNX embedding index.
+- Public `/api/papers` and `/api/embedding-index` demo data endpoints.
+- Reproducible comparison of BM25, TF-IDF, dense, and hybrid retrieval on
+  the full SciFact test split.
+- Checked-in comparison metrics and retrieval timing results.
+
 ## [0.2.1] - 2026-08-13
 
 ### Fixed

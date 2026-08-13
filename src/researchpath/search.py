@@ -95,7 +95,7 @@ def _normalize(scores: np.ndarray) -> np.ndarray:
 
 
 class HybridSearchEngine:
-    """Combine lexical BM25 and TF-IDF vector retrieval with explanations."""
+    """Combine lexical and vector retrieval with inspectable explanations."""
 
     def __init__(
         self,
@@ -117,18 +117,30 @@ class HybridSearchEngine:
     def get_paper(self, paper_id: str) -> Paper | None:
         return self._by_id.get(paper_id)
 
-    def search(self, query: str, limit: int = 10) -> list[SearchResult]:
-        """Search the corpus and return transparent ranked results."""
+    def search(
+        self,
+        query: str,
+        limit: int = 10,
+        mode: str = "hybrid",
+    ) -> list[SearchResult]:
+        """Search the corpus using BM25, vector, or hybrid ranking."""
 
         query_tokens = set(tokenize(query))
         if not query_tokens:
             return []
+        if mode not in {"hybrid", "bm25", "vector"}:
+            raise ValueError(f"Unknown retrieval mode: {mode}")
 
         bm25_scores = self.bm25.scores(query)
         vector_scores = self.vector.scores(query)
-        final_scores = self.bm25_weight * _normalize(bm25_scores) + (
-            1 - self.bm25_weight
-        ) * _normalize(vector_scores)
+        if mode == "bm25":
+            final_scores = _normalize(bm25_scores)
+        elif mode == "vector":
+            final_scores = _normalize(vector_scores)
+        else:
+            final_scores = self.bm25_weight * _normalize(bm25_scores) + (
+                1 - self.bm25_weight
+            ) * _normalize(vector_scores)
 
         ranked_indices = np.argsort(-final_scores)
         results: list[SearchResult] = []
@@ -140,8 +152,12 @@ class HybridSearchEngine:
             topic_terms = set(tokenize(" ".join(paper.topics)))
             matched_terms = sorted(query_tokens & set(tokenize(paper.searchable_text)))
             reasons = [
-                "Hybrid score combines BM25 lexical relevance and "
-                f"{self.vector_backend} similarity."
+                {
+                    "bm25": "Ranked by BM25 lexical relevance.",
+                    "vector": f"Ranked by {self.vector_backend} similarity.",
+                    "hybrid": "Hybrid score combines BM25 lexical relevance and "
+                    f"{self.vector_backend} similarity.",
+                }[mode]
             ]
             title_matches = sorted(query_tokens & title_terms)
             topic_matches = sorted(query_tokens & topic_terms)

@@ -8,8 +8,8 @@ The project is designed as a learning and research tool rather than a
 black-box chatbot. Every recommendation exposes its retrieval scores, matched
 terms, topic metadata, and citation relationships.
 
-> Current status: public demo with a curated corpus, hybrid retrieval,
-> citation-aware path generation, CLI, HTTP API, embeddings, and a BEIR result.
+> Current status: public demo with selectable retrieval modes, browser embeddings,
+> citation-aware path generation, CLI, HTTP API, and BEIR comparisons.
 
 Live demo: <https://researchpath-two.vercel.app>
 
@@ -28,6 +28,7 @@ retrieval quality can be inspected locally and measured on a public benchmark.
 - BM25 lexical retrieval implemented from scratch.
 - TF-IDF vector retrieval as a lightweight local baseline.
 - Optional dense semantic retrieval with Sentence Transformers.
+- Browser-side dense retrieval with a cached MiniLM ONNX model.
 - Hybrid ranking with separate, inspectable component scores.
 - Citation graph construction from referenced works.
 - Chronological reading-path generation with foundation, core, and frontier
@@ -64,9 +65,12 @@ export RESEARCHPATH_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
 researchpath serve
 ~~~
 
-The first run downloads the model from Hugging Face and caches it locally.
-The default web deployment uses the lightweight TF-IDF baseline so its Python
-Function stays small and cold starts remain predictable.
+The first local run downloads the model from Hugging Face and caches it.
+The public demo offers a “Dense embeddings (browser)” mode powered by
+[Transformers.js](https://huggingface.co/docs/transformers.js/en/installation):
+the query is encoded on the user's device and compared with the checked-in
+MiniLM document index. The Python API keeps a lightweight TF-IDF default for
+fast server responses.
 
 Run the reproducible BEIR evaluation:
 
@@ -117,8 +121,9 @@ When the server is running:
 
 - `GET /health` — service health check.
 - `GET /api/stats` — corpus and graph statistics.
-- `GET /api/search?q=information%20retrieval&limit=10` — ranked results.
+- `GET /api/search?q=information%20retrieval&mode=hybrid&limit=10` — ranked results.
 - `GET /api/reading-path?q=distributed%20systems&limit=6` — reading path.
+- `GET /api/papers` — the normalized demo corpus.
 - `GET /api/papers/{paper_id}` — one normalized paper.
 - `/docs` — interactive OpenAPI documentation.
 
@@ -178,12 +183,11 @@ ruff check .
 - [x] Add OpenAlex ingestion.
 - [x] Add optional Sentence Transformer embeddings.
 - [x] Add a BEIR benchmark harness.
-- [ ] Tune dense embedding retrieval as a separate benchmarked backend.
+- [x] Compare BM25, TF-IDF, dense, and hybrid retrieval on SciFact.
+- [x] Add public browser-side dense search.
 - [ ] Store larger corpora in SQLite or DuckDB.
-- [ ] Evaluate Recall@k, MRR, nDCG@10, latency, and memory usage.
-- [ ] Compare lexical, vector, and hybrid retrieval on public IR datasets such
-  as [BEIR](https://arxiv.org/abs/2104.08663).
-- [ ] Add interactive citation-graph visualization.
+- [ ] Tune dense embedding retrieval as a separate benchmarked backend.
+- [ ] Add interactive benchmark and citation-graph visualizations.
 - [ ] Add bilingual query support for English and Russian.
 
 ## Data and Limitations
@@ -192,9 +196,10 @@ The checked-in dataset is a small, manually curated demo fixture. It is meant
 to make the application reproducible without network access; it is not a
 scientific benchmark.
 
-The public web demo intentionally uses TF-IDF to keep deployment lightweight.
-The dense Sentence Transformer backend is opt-in locally, and its SciFact
-evaluation is checked in with fixed data, queries, metrics, and model details.
+The public web demo uses TF-IDF on the server and browser-side MiniLM for dense
+search. The checked-in browser index covers the small curated corpus; larger
+OpenAlex imports still use the local Python embedding backend or a future
+vector database.
 
 ## License
 
