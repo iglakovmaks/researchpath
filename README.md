@@ -109,7 +109,8 @@ researchpath ingest "retrieval augmented generation" \
 researchpath serve --data data/rag.local.json
 ~~~
 
-Store a larger import in SQLite instead of a JSON snapshot:
+Store a larger import in SQLite instead of a JSON snapshot. SQLite-backed
+services use FTS5 BM25 by default and hydrate only the requested top-k papers:
 
 ~~~bash
 researchpath ingest "retrieval augmented generation" \
@@ -147,7 +148,9 @@ When the server is running:
 
 - `GET /health` — service health check.
 - `GET /api/stats` — corpus and graph statistics.
-- `GET /api/search?q=information%20retrieval&mode=hybrid&limit=10` — ranked results.
+- `GET /api/search?q=information%20retrieval&limit=10` — ranked results. JSON
+  defaults to hybrid retrieval; SQLite defaults to FTS5 BM25.
+- `GET /api/search?q=information%20retrieval&mode=bm25&limit=10` — explicit BM25.
 - `GET /api/reading-path?q=distributed%20systems&limit=6` — reading path.
 - `GET /api/papers` — the normalized demo corpus.
 - `GET /api/papers/{paper_id}` — one normalized paper.
@@ -161,12 +164,16 @@ OpenAlex / JSON corpus
           ▼
    Normalized Paper model
           │
-    ┌─────┴─────┐
-    ▼           ▼
- BM25 index   TF-IDF / embeddings index
+    ┌─────┴─────────────┐
+    ▼                   ▼
+ SQLite + FTS5      JSON + in-memory indexes
+    │                   │
+    ▼                   ▼
+ SQLite BM25       BM25 + TF-IDF / embeddings
+    │                   │
     └─────────┬─────────┘
-          ▼
-    Hybrid ranking
+              ▼
+        Ranked results
           │
     ┌─────┴─────┐
     ▼           ▼
@@ -213,6 +220,7 @@ ruff check .
 - [x] Add public browser-side dense search.
 - [x] Store normalized corpora in SQLite with an FTS5 index.
 - [x] Add cursor-paginated OpenAlex ingestion.
+- [x] Run scalable SQLite BM25 without materializing the full corpus in memory.
 - [ ] Tune dense embedding retrieval as a separate benchmarked backend.
 - [ ] Add interactive benchmark and citation-graph visualizations.
 - [ ] Add bilingual query support for English and Russian.
@@ -224,9 +232,10 @@ to make the application reproducible without network access; it is not a
 scientific benchmark.
 
 The public web demo uses TF-IDF on the server and browser-side MiniLM for dense
-search. The checked-in browser index covers the small curated corpus; larger
-OpenAlex imports use SQLite for durable metadata and still build retrieval
-indexes in memory. A future release can add ANN/vector-database indexing.
+search over the checked-in curated corpus. SQLite imports use FTS5 BM25 on the
+server and do not build a full in-memory retrieval index. Dense and hybrid modes
+remain available for JSON corpora; a future release can add ANN/vector-database
+indexing for large-scale semantic retrieval.
 
 ## License
 

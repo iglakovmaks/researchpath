@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from researchpath.corpus import SQLiteCorpusStore
 from researchpath.embeddings import SentenceTransformerIndex
 from researchpath.models import Paper, SearchResult
 
@@ -89,6 +90,18 @@ class VectorIndex:
         return cosine_similarity(query_vector, self.document_matrix).ravel()
 
 
+class SQLiteBM25Index:
+    """BM25 retrieval delegated to SQLite FTS5's indexed corpus."""
+
+    backend_name = "sqlite-fts5"
+
+    def __init__(self, store: SQLiteCorpusStore):
+        self.store = store
+
+    def search(self, query: str, limit: int) -> list[tuple[Paper, float]]:
+        return self.store.search_scored(query, limit)
+
+
 def _normalize(scores: np.ndarray) -> np.ndarray:
     maximum = float(scores.max()) if scores.size else 0.0
     return scores / maximum if maximum > 0 else np.zeros_like(scores)
@@ -102,19 +115,26 @@ class HybridSearchEngine:
         papers: list[Paper],
         bm25_weight: float = 0.6,
         embedding_model: str | None = None,
+        corpus_store: SQLiteCorpusStore | None = None,
     ):
         self.papers = papers
         self.bm25_weight = bm25_weight
-        self.bm25 = BM25Index(papers)
-        self.vector = (
-            SentenceTransformerIndex(papers, embedding_model)
-            if embedding_model
-            else VectorIndex(papers)
-        )
+        self.corpus_store = corpus_store
+        self.bm25 = SQLiteBM25Index(corpus_store) if corpus_store else BM25Index(papers)
+        self.vector = None
+        if papers:
+            self.vector = (
+                SentenceTransformerIndex(papers, embedding_model)
+                if embedding_model
+                else VectorIndex(papers)
+            )
         self.vector_backend = getattr(self.vector, "backend_name", "tf-idf")
+        self.bm25_backend = getattr(self.bm25, "backend_name", "python-bm25")
         self._by_id = {paper.id: paper for paper in papers}
 
     def get_paper(self, paper_id: str) -> Paper | None:
+        if self.corpus_store:
+            return self.corpus_store.get(paper_id)
         return self._by_id.get(paper_id)
 
     def search(
@@ -131,7 +151,17 @@ class HybridSearchEngine:
         if mode not in {"hybrid", "bm25", "vector"}:
             raise ValueError(f"Unknown retrieval mode: {mode}")
 
+        if self.corpus_store:
+            if mode != "bm25":
+                raise ValueError(
+                    "SQLite-backed corpora currently support scalable bm25 mode; "
+                    "load a JSON corpus to use vector or hybrid mode."
+                )
+            return self._search_sqlite(query, limit)
+
         bm25_scores = self.bm25.scores(query)
+        if self.vector is None:
+            return []
         vector_scores = self.vector.scores(query)
         if mode == "bm25":
             final_scores = _normalize(bm25_scores)
@@ -179,4 +209,39 @@ class HybridSearchEngine:
             )
             if len(results) >= max(1, limit):
                 break
+        return results
+
+    def _search_sqlite(self, query: str, limit: int) -> list[SearchResult]:
+        """Build results from only the top rows returned by SQLite FTS5."""
+
+        scored_papers = self.bm25.search(query, max(1, limit))
+        if not scored_papers:
+            return []
+        raw_scores = np.asarray([score for _, score in scored_papers], dtype=float)
+        final_scores = _normalize(raw_scores)
+        query_tokens = set(tokenize(query))
+        results: list[SearchResult] = []
+        for index, (paper, bm25_score) in enumerate(scored_papers):
+            title_terms = set(tokenize(paper.title))
+            topic_terms = set(tokenize(" ".join(paper.topics)))
+            matched_terms = sorted(query_tokens & set(tokenize(paper.searchable_text)))
+            reasons = ["Ranked by SQLite FTS5 BM25 without materializing the full corpus."]
+            title_matches = sorted(query_tokens & title_terms)
+            topic_matches = sorted(query_tokens & topic_terms)
+            if title_matches:
+                reasons.append(f"Matches title terms: {', '.join(title_matches)}.")
+            elif topic_matches:
+                reasons.append(f"Matches topic metadata: {', '.join(topic_matches)}.")
+            else:
+                reasons.append("Matches the abstract or author metadata.")
+            results.append(
+                SearchResult(
+                    paper=paper,
+                    bm25_score=round(float(bm25_score), 6),
+                    vector_score=0.0,
+                    final_score=round(float(final_scores[index]), 6),
+                    matched_terms=matched_terms,
+                    reasons=reasons,
+                )
+            )
         return results

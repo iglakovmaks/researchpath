@@ -2,6 +2,14 @@
 
 All notable changes to ResearchPath are documented here.
 
+## [0.5.0] - 2026-08-13
+
+### Added
+
+- SQLite FTS5 BM25 retrieval that returns only the requested top-k metadata rows.
+- SQL-backed citation graph queries and corpus statistics for SQLite services.
+- Explicit API validation for retrieval modes unsupported by the scalable SQLite backend.
+
 ## [0.4.0] - 2026-08-13
 
 ### Added

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 
+from researchpath.corpus import SQLiteCorpusStore
 from researchpath.models import Paper
 
 
@@ -43,3 +44,19 @@ class CitationGraph:
                 | {node for node in self.incoming if self.incoming[node]}
             ),
         }
+
+
+class SQLiteCitationGraph:
+    """Citation graph facade backed by normalized SQLite edges."""
+
+    def __init__(self, store: SQLiteCorpusStore):
+        self.store = store
+
+    def is_connected(self, first_id: str, second_id: str) -> bool:
+        return self.store.citation_is_connected(first_id, second_id)
+
+    def neighbors(self, paper_id: str) -> set[str]:
+        return self.store.citation_neighbors(paper_id)
+
+    def stats(self) -> dict[str, int]:
+        return self.store.citation_stats()

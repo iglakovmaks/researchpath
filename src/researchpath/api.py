@@ -26,7 +26,7 @@ def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
     app = FastAPI(
         title="ResearchPath",
         description="An explainable navigator for computer science literature.",
-        version="0.4.0",
+        version="0.5.0",
     )
     app.state.service = service
 
@@ -46,12 +46,15 @@ def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
     def search(
         q: str = Query(min_length=2, description="Topic or research question."),
         limit: int = Query(default=10, ge=1, le=50),
-        mode: Literal["hybrid", "bm25", "vector"] = Query(
-            default="hybrid",
-            description="Retrieval mode: hybrid, bm25, or vector.",
+        mode: Literal["hybrid", "bm25", "vector"] | None = Query(
+            default=None,
+            description="Retrieval mode; defaults to hybrid for JSON and bm25 for SQLite.",
         ),
     ) -> list[SearchResult]:
-        return service.search(q, limit, mode=mode)
+        try:
+            return service.search(q, limit, mode=mode)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.get("/api/reading-path", response_model=list[ReadingPathStep])
     def reading_path(
@@ -68,8 +71,8 @@ def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
         return found
 
     @app.get("/api/papers", response_model=list[Paper])
-    def papers() -> list[Paper]:
-        return service.papers
+    def papers(limit: int = Query(default=100, ge=1, le=1000)) -> list[Paper]:
+        return service.list_papers(limit)
 
     @app.get("/api/embedding-index", include_in_schema=False)
     def embedding_index() -> FileResponse:
