@@ -98,7 +98,10 @@ class SQLiteCorpusStore:
         # is read-mostly after startup, so allow that shared connection to be
         # used by the request workers.
         if read_only:
-            database_uri = f"file:{self.path.resolve()}?mode=ro"
+            # The bundled database is immutable. This prevents SQLite from
+            # looking for WAL/journal sidecar files in Vercel's read-only
+            # function filesystem.
+            database_uri = f"file:{self.path.resolve()}?mode=ro&immutable=1"
             self.connection = sqlite3.connect(
                 database_uri,
                 uri=True,
