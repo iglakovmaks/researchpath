@@ -2,6 +2,12 @@
 
 All notable changes to ResearchPath are documented here.
 
+## [0.6.2] - 2026-08-14
+
+### Added
+
+- Added a top-right `developed by iglakovmaks` credit linking to the GitHub profile.
+
 ## [0.6.1] - 2026-08-14
 
 ### Fixed

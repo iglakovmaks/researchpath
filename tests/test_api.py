@@ -22,6 +22,9 @@ def request(app, method: str, path: str) -> httpx.Response:
 def test_api_exposes_search_path_and_health() -> None:
     app = create_app(DATA_PATH)
 
+    homepage = request(app, "GET", "/")
+    assert homepage.status_code == 200
+    assert "developed by iglakovmaks" in homepage.text
     assert request(app, "GET", "/health").json() == {"status": "ok"}
     stats = request(app, "GET", "/api/stats").json()
     assert stats["papers"] == 16
@@ -78,6 +81,7 @@ def test_api_exposes_public_insights_payloads() -> None:
     insights = request(app, "GET", "/insights")
     assert insights.status_code == 200
     assert "collision avoidance" in insights.text
+    assert "developed by iglakovmaks" in insights.text
     benchmark = request(app, "GET", "/api/benchmark").json()
     assert benchmark["dataset"] == "SciFact"
     assert benchmark["query_count"] == 300

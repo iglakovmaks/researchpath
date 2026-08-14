@@ -29,6 +29,9 @@
       h2 { margin-top: 0; }
       .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
       .lead { max-width: 720px; color: var(--muted); font-size: 1.15rem; }
+      .credit { position: fixed; top: 18px; right: 24px; z-index: 10; font-size: .78rem; letter-spacing: .04em; }
+      .credit a { color: var(--muted); text-decoration: none; }
+      .credit a:hover { color: var(--accent); }
       .search-box, .panel, .paper {
         background: color-mix(in srgb, var(--panel) 94%, transparent);
         border: 1px solid var(--border);
@@ -70,6 +73,7 @@
     </style>
   </head>
   <body>
+    <div class="credit"><a href="https://github.com/iglakovmaks" target="_blank" rel="noreferrer">developed by iglakovmaks</a></div>
     <main>
       <div class="eyebrow">ResearchPath · local demo</div>
       <h1>Find your way into a research topic.</h1>

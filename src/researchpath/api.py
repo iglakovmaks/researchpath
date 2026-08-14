@@ -36,7 +36,7 @@ def create_app(
     app = FastAPI(
         title="ResearchPath",
         description="An explainable navigator for computer science literature.",
-        version="0.6.1",
+        version="0.6.2",
     )
     app.state.service = service
 
