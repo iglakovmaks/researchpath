@@ -11,22 +11,28 @@ from researchpath.models import Paper, ReadingPathStep, SearchResult
 from researchpath.service import ResearchPathService
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DATA_PATH = PROJECT_ROOT / "data" / "demo_papers.json"
+DEFAULT_DATA_PATH = PROJECT_ROOT / "data" / "demo.db"
 EMBEDDING_INDEX_PATH = PROJECT_ROOT / "data" / "demo_embeddings.json"
 WEB_PATH = PROJECT_ROOT / "web" / "index.html"
 
 
-def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
+def create_app(
+    data_path: str | Path = DEFAULT_DATA_PATH,
+    read_only: bool | None = None,
+) -> FastAPI:
     """Create the ResearchPath HTTP API."""
 
+    if read_only is None:
+        read_only = os.getenv("VERCEL") == "1"
     service = ResearchPathService.from_path(
         data_path,
         embedding_model=os.getenv("RESEARCHPATH_EMBEDDING_MODEL"),
+        read_only=read_only,
     )
     app = FastAPI(
         title="ResearchPath",
         description="An explainable navigator for computer science literature.",
-        version="0.5.0",
+        version="0.5.1",
     )
     app.state.service = service
 

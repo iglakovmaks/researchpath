@@ -60,3 +60,18 @@ def test_sqlite_service_rejects_non_scalable_modes(tmp_path: Path) -> None:
         assert "scalable bm25 mode" in str(exc)
     else:
         raise AssertionError("SQLite service should reject vector mode")
+
+
+def test_read_only_sqlite_store_rejects_writes(tmp_path: Path) -> None:
+    database_path = tmp_path / "researchpath.db"
+    migrate_json_to_sqlite(DATA_PATH, database_path)
+
+    with SQLiteCorpusStore(database_path, read_only=True) as store:
+        paper = store.get("demo-rag")
+        assert paper is not None
+        try:
+            store.upsert(paper)
+        except RuntimeError as exc:
+            assert "read-only" in str(exc)
+        else:
+            raise AssertionError("Read-only SQLite store should reject writes")

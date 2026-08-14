@@ -8,8 +8,9 @@ The project is designed as a learning and research tool rather than a
 black-box chatbot. Every recommendation exposes its retrieval scores, matched
 terms, topic metadata, and citation relationships.
 
-> Current status: public demo with selectable retrieval modes, browser embeddings,
-> citation-aware path generation, CLI, HTTP API, and BEIR comparisons.
+> Current status: public SQLite FTS5 BM25 demo with selectable retrieval modes,
+> browser embeddings, citation-aware path generation, CLI, HTTP API, and BEIR
+> comparisons.
 
 Live demo: <https://researchpath-two.vercel.app>
 
@@ -51,7 +52,11 @@ researchpath serve
 
 Open <http://127.0.0.1:8000> in a browser.
 
-The demo corpus includes three connected topic areas:
+The checked-in demo corpus is available as both `data/demo_papers.json` and a
+derived read-only `data/demo.db`. The public demo runs the SQLite database, so
+its server-side default is FTS5 BM25 rather than an in-memory index.
+
+The corpus includes three connected topic areas:
 
 - Distributed systems.
 - Information retrieval.
@@ -70,8 +75,9 @@ The first local run downloads the model from Hugging Face and caches it.
 The public demo offers a “Dense embeddings (browser)” mode powered by
 [Transformers.js](https://huggingface.co/docs/transformers.js/en/installation):
 the query is encoded on the user's device and compared with the checked-in
-MiniLM document index. The Python API keeps a lightweight TF-IDF default for
-fast server responses.
+MiniLM document index. The Python API keeps a lightweight TF-IDF baseline for
+JSON corpora. SQLite corpora use FTS5 BM25 and hydrate only the top-k metadata
+rows.
 
 Run the reproducible BEIR evaluation:
 
@@ -122,7 +128,7 @@ researchpath search "dense retrieval" --data data/researchpath.db
 researchpath serve --data data/researchpath.db
 ~~~
 
-Convert the checked-in demo corpus to SQLite:
+Convert the JSON source corpus to SQLite:
 
 ~~~bash
 researchpath migrate \
@@ -142,7 +148,8 @@ See the [OpenAlex API reference](https://developers.openalex.org/api-reference/i
 
 ## API
 
-The deployed demo exposes the API and interactive OpenAPI documentation.
+The deployed demo exposes the API and interactive OpenAPI documentation. Its
+default backend is the checked-in read-only SQLite corpus.
 
 When the server is running:
 
@@ -227,15 +234,15 @@ ruff check .
 
 ## Data and Limitations
 
-The checked-in dataset is a small, manually curated demo fixture. It is meant
-to make the application reproducible without network access; it is not a
-scientific benchmark.
+The checked-in JSON dataset and derived SQLite database are small, manually
+curated demo fixtures. They make the application reproducible without network
+access; they are not a scientific benchmark.
 
-The public web demo uses TF-IDF on the server and browser-side MiniLM for dense
-search over the checked-in curated corpus. SQLite imports use FTS5 BM25 on the
-server and do not build a full in-memory retrieval index. Dense and hybrid modes
-remain available for JSON corpora; a future release can add ANN/vector-database
-indexing for large-scale semantic retrieval.
+The public web demo uses SQLite FTS5 BM25 on the server and browser-side MiniLM
+for dense search over the checked-in curated corpus. SQLite imports use the
+same scalable server path and do not build a full in-memory retrieval index.
+Dense and hybrid modes remain available for JSON corpora; a future release can
+add ANN/vector-database indexing for large-scale semantic retrieval.
 
 ## License
 

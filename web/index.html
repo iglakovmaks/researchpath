@@ -82,8 +82,8 @@
         <input id="query" value="information retrieval" aria-label="Research question"
           placeholder="Try: distributed systems, information retrieval..." />
         <select id="mode" aria-label="Retrieval mode">
-          <option value="hybrid">Hybrid API</option>
           <option value="bm25">BM25 API</option>
+          <option value="hybrid">Hybrid API</option>
           <option value="vector">TF-IDF API</option>
           <option value="dense-browser">Dense embeddings (browser)</option>
         </select>
@@ -212,6 +212,11 @@
       fetch("/api/stats")
         .then((response) => response.json())
         .then((stats) => {
+          if (stats.storage_backend === "sqlite") {
+            modeInput.querySelector('option[value="hybrid"]').disabled = true;
+            modeInput.querySelector('option[value="vector"]').disabled = true;
+            modeInput.value = "bm25";
+          }
           backend.textContent = "Backend: " + stats.retrieval_backend +
             " · " + stats.papers + " indexed works · " + stats.edges +
             " citation links · " + stats.storage_backend +

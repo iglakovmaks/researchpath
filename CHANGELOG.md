@@ -2,6 +2,14 @@
 
 All notable changes to ResearchPath are documented here.
 
+## [0.5.1] - 2026-08-14
+
+### Added
+
+- Read-only SQLite mode for serverless deployments.
+- Checked-in SQLite demo corpus used by the public production API.
+- Public demo now reports and serves SQLite FTS5 BM25 by default.
+
 ## [0.5.0] - 2026-08-13
 
 ### Added

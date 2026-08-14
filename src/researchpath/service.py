@@ -44,6 +44,7 @@ class ResearchPathService:
         cls,
         path: str | Path,
         embedding_model: str | None = None,
+        read_only: bool = False,
     ) -> ResearchPathService:
         """Create a service from either a JSON or SQLite corpus."""
 
@@ -53,7 +54,7 @@ class ResearchPathService:
                 [],
                 embedding_model=embedding_model,
                 storage_backend="sqlite",
-                corpus_store=SQLiteCorpusStore(corpus_path),
+                corpus_store=SQLiteCorpusStore(corpus_path, read_only=read_only),
             )
         return cls(
             load_papers(corpus_path), embedding_model=embedding_model, storage_backend="json"

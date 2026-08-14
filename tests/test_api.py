@@ -55,3 +55,18 @@ def test_api_loads_a_sqlite_corpus(tmp_path: Path) -> None:
     assert stats["retrieval_backend"] == "sqlite-fts5"
     assert request(app, "GET", "/api/search?q=distributed%20systems&limit=3").status_code == 200
     assert request(app, "GET", "/api/search?q=distributed%20systems&mode=vector").status_code == 400
+
+
+def test_api_can_serve_a_read_only_sqlite_corpus(tmp_path: Path) -> None:
+    database_path = tmp_path / "demo.db"
+    migrate_json_to_sqlite(DATA_PATH, database_path)
+    app = create_app(database_path, read_only=True)
+
+    stats = request(app, "GET", "/api/stats").json()
+    assert stats["storage_backend"] == "sqlite"
+    assert stats["retrieval_backend"] == "sqlite-fts5"
+    assert request(app, "GET", "/api/search?q=information%20retrieval").status_code == 200
+    assert (
+        request(app, "GET", "/api/reading-path?q=information%20retrieval&limit=4").status_code
+        == 200
+    )

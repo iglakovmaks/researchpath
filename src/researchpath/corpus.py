@@ -89,18 +89,29 @@ class SQLiteCorpusStore:
 
     backend_name = "sqlite"
 
-    def __init__(self, path: str | Path):
+    def __init__(self, path: str | Path, read_only: bool = False):
         self.path = Path(path)
-        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.read_only = read_only
+        if not read_only:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
         # FastAPI executes synchronous handlers in a worker thread. The store
         # is read-mostly after startup, so allow that shared connection to be
         # used by the request workers.
-        self.connection = sqlite3.connect(self.path, check_same_thread=False)
+        if read_only:
+            database_uri = f"file:{self.path.resolve()}?mode=ro"
+            self.connection = sqlite3.connect(
+                database_uri,
+                uri=True,
+                check_same_thread=False,
+            )
+        else:
+            self.connection = sqlite3.connect(self.path, check_same_thread=False)
         self.connection.row_factory = sqlite3.Row
-        self.connection.execute("PRAGMA journal_mode = WAL")
-        self.connection.executescript(SCHEMA)
-        self._ensure_citations_ready()
-        self.connection.commit()
+        if not read_only:
+            self.connection.execute("PRAGMA journal_mode = WAL")
+            self.connection.executescript(SCHEMA)
+            self._ensure_citations_ready()
+            self.connection.commit()
 
     def _ensure_citations_ready(self) -> None:
         row = self.connection.execute(
@@ -127,6 +138,9 @@ class SQLiteCorpusStore:
 
     def upsert(self, paper: Paper) -> None:
         """Insert or replace one paper and its FTS document."""
+
+        if self.read_only:
+            raise RuntimeError("Cannot upsert into a read-only SQLite corpus")
 
         self.connection.execute(
             """
