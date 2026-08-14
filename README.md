@@ -9,8 +9,8 @@ black-box chatbot. Every recommendation exposes its retrieval scores, matched
 terms, topic metadata, and citation relationships.
 
 > Current status: public SQLite FTS5 BM25 demo with selectable retrieval modes,
-> browser embeddings, citation-aware path generation, CLI, HTTP API, and BEIR
-> comparisons.
+> browser embeddings, citation-aware paths, visual BEIR evaluation, CLI, HTTP
+> API, and an interactive citation graph.
 
 Live demo: <https://researchpath-two.vercel.app>
 
@@ -36,6 +36,7 @@ retrieval quality can be inspected locally and measured on a public benchmark.
   roles.
 - OpenAlex ingestion command for importing real scholarly metadata.
 - SQLite corpus storage with FTS5 and cursor-paginated OpenAlex ingestion.
+- Public research lab page with visual BEIR metrics and citation graph exploration.
 - JSON API and a small browser interface.
 - Unit and API tests.
 
@@ -91,6 +92,10 @@ The checked-in full SciFact test-split result uses
 `NDCG@10 = 0.64508`, `MAP@10 = 0.59593`, and `Recall@10 = 0.78333`.
 See [benchmarks/README.md](benchmarks/README.md) and the JSON result for the
 exact protocol and all reported metrics.
+
+Open the public [research lab](https://researchpath-two.vercel.app/insights) to
+compare the retrieval backends visually and inspect the citation graph behind
+the demo reading paths.
 
 ## Command-line Usage
 
@@ -155,6 +160,9 @@ When the server is running:
 
 - `GET /health` — service health check.
 - `GET /api/stats` — corpus and graph statistics.
+- `GET /api/benchmark` — checked-in BEIR/SciFact comparison payload.
+- `GET /api/citation-graph` — bounded graph payload for visualization clients.
+- `GET /insights` — visual BEIR benchmark and citation-graph research lab.
 - `GET /api/search?q=information%20retrieval&limit=10` — ranked results. JSON
   defaults to hybrid retrieval; SQLite defaults to FTS5 BM25.
 - `GET /api/search?q=information%20retrieval&mode=bm25&limit=10` — explicit BM25.
@@ -228,6 +236,7 @@ ruff check .
 - [x] Store normalized corpora in SQLite with an FTS5 index.
 - [x] Add cursor-paginated OpenAlex ingestion.
 - [x] Run scalable SQLite BM25 without materializing the full corpus in memory.
+- [x] Add a public visual BEIR benchmark and interactive citation graph.
 - [ ] Tune dense embedding retrieval as a separate benchmarked backend.
 - [ ] Add interactive benchmark and citation-graph visualizations.
 - [ ] Add bilingual query support for English and Russian.

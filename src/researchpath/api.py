@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
+from collections import Counter
 from pathlib import Path
 from typing import Literal
 
@@ -14,6 +16,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATA_PATH = PROJECT_ROOT / "data" / "demo.db"
 EMBEDDING_INDEX_PATH = PROJECT_ROOT / "data" / "demo_embeddings.json"
 WEB_PATH = PROJECT_ROOT / "web" / "index.html"
+INSIGHTS_PATH = PROJECT_ROOT / "web" / "insights.html"
+BENCHMARK_PATH = PROJECT_ROOT / "data" / "benchmark_results.json"
 
 
 def create_app(
@@ -32,13 +36,17 @@ def create_app(
     app = FastAPI(
         title="ResearchPath",
         description="An explainable navigator for computer science literature.",
-        version="0.5.1",
+        version="0.6.0",
     )
     app.state.service = service
 
     @app.get("/", include_in_schema=False)
     def index() -> FileResponse:
         return FileResponse(WEB_PATH)
+
+    @app.get("/insights", include_in_schema=False)
+    def insights() -> FileResponse:
+        return FileResponse(INSIGHTS_PATH)
 
     @app.get("/health")
     def health() -> dict[str, str]:
@@ -47,6 +55,46 @@ def create_app(
     @app.get("/api/stats")
     def stats() -> dict[str, int | str]:
         return service.stats()
+
+    @app.get("/api/benchmark")
+    def benchmark() -> dict[str, object]:
+        """Return the checked-in BEIR comparison used by the public chart."""
+
+        return json.loads(BENCHMARK_PATH.read_text(encoding="utf-8"))
+
+    @app.get("/api/citation-graph")
+    def citation_graph(
+        limit: int = Query(default=200, ge=1, le=1000),
+    ) -> dict[str, object]:
+        """Return a bounded citation graph for visualization clients."""
+
+        papers = service.list_papers(limit)
+        paper_ids = {paper.id for paper in papers}
+        edges = [
+            {"source": paper.id, "target": cited_id}
+            for paper in papers
+            for cited_id in paper.referenced_works
+            if cited_id in paper_ids
+        ]
+        degrees = Counter(
+            endpoint for edge in edges for endpoint in (edge["source"], edge["target"])
+        )
+        nodes = [
+            {
+                "id": paper.id,
+                "label": paper.title,
+                "year": paper.publication_year,
+                "topics": paper.topics,
+                "cited_by_count": paper.cited_by_count,
+                "degree": degrees[paper.id],
+            }
+            for paper in papers
+        ]
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "stats": service.graph.stats(),
+        }
 
     @app.get("/api/search", response_model=list[SearchResult])
     def search(

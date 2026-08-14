@@ -1,0 +1,42 @@
+{
+  "dataset": "SciFact",
+  "split": "test",
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "corpus_size": 5183,
+  "query_count": 300,
+  "protocol": "BEIR EvaluateRetrieval on the full SciFact test split",
+  "metrics": [
+    {
+      "id": "bm25",
+      "label": "BM25",
+      "ndcg_at_10": 0.66439,
+      "map_at_10": 0.62096,
+      "recall_at_10": 0.78161,
+      "retrieval_seconds": 14.268
+    },
+    {
+      "id": "tfidf",
+      "label": "TF-IDF",
+      "ndcg_at_10": 0.64176,
+      "map_at_10": 0.59169,
+      "recall_at_10": 0.779,
+      "retrieval_seconds": 2.886
+    },
+    {
+      "id": "dense",
+      "label": "Dense MiniLM",
+      "ndcg_at_10": 0.64508,
+      "map_at_10": 0.59593,
+      "recall_at_10": 0.78333,
+      "retrieval_seconds": 34.661
+    },
+    {
+      "id": "hybrid",
+      "label": "Hybrid 60/40",
+      "ndcg_at_10": 0.71394,
+      "map_at_10": 0.67019,
+      "recall_at_10": 0.83322,
+      "retrieval_seconds": 17.183
+    }
+  ]
+}

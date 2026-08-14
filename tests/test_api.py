@@ -70,3 +70,19 @@ def test_api_can_serve_a_read_only_sqlite_corpus(tmp_path: Path) -> None:
         request(app, "GET", "/api/reading-path?q=information%20retrieval&limit=4").status_code
         == 200
     )
+
+
+def test_api_exposes_public_insights_payloads() -> None:
+    app = create_app(DATA_PATH)
+
+    assert request(app, "GET", "/insights").status_code == 200
+    benchmark = request(app, "GET", "/api/benchmark").json()
+    assert benchmark["dataset"] == "SciFact"
+    assert benchmark["query_count"] == 300
+    assert len(benchmark["metrics"]) == 4
+    assert benchmark["metrics"][-1]["ndcg_at_10"] == 0.71394
+
+    graph = request(app, "GET", "/api/citation-graph").json()
+    assert len(graph["nodes"]) == 16
+    assert len(graph["edges"]) == 22
+    assert graph["stats"]["connected_nodes"] == 16

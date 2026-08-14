@@ -2,6 +2,15 @@
 
 All notable changes to ResearchPath are documented here.
 
+## [0.6.0] - 2026-08-14
+
+### Added
+
+- Public `/insights` research lab page.
+- Visual BEIR/SciFact comparison for BM25, TF-IDF, dense MiniLM, and hybrid retrieval.
+- Interactive citation graph with year, topic, citation-count, and edge details.
+- `/api/benchmark` and `/api/citation-graph` payloads for reproducible visual clients.
+
 ## [0.5.1] - 2026-08-14
 
 ### Added
