@@ -2,6 +2,12 @@
 
 All notable changes to ResearchPath are documented here.
 
+## [0.6.1] - 2026-08-14
+
+### Fixed
+
+- Added collision-aware citation-graph labels with compact titles and readable spacing.
+
 ## [0.6.0] - 2026-08-14
 
 ### Added

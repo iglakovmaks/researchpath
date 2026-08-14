@@ -75,7 +75,9 @@ def test_api_can_serve_a_read_only_sqlite_corpus(tmp_path: Path) -> None:
 def test_api_exposes_public_insights_payloads() -> None:
     app = create_app(DATA_PATH)
 
-    assert request(app, "GET", "/insights").status_code == 200
+    insights = request(app, "GET", "/insights")
+    assert insights.status_code == 200
+    assert "collision avoidance" in insights.text
     benchmark = request(app, "GET", "/api/benchmark").json()
     assert benchmark["dataset"] == "SciFact"
     assert benchmark["query_count"] == 300

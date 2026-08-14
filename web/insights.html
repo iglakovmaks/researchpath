@@ -67,7 +67,7 @@
       .graph-edge { stroke: #6e7681; stroke-width: 1.3; opacity: .58; marker-end: url(#arrow); }
       .graph-node { cursor: pointer; stroke: var(--text); stroke-width: 1.5; transition: r .18s ease, stroke-width .18s ease; }
       .graph-node:hover, .graph-node.selected { stroke: white; stroke-width: 3.5; }
-      .graph-label { fill: var(--text); font-size: 11px; pointer-events: none; }
+      .graph-label { fill: var(--text); font-size: 11px; pointer-events: none; paint-order: stroke; stroke: var(--panel-soft); stroke-width: 4px; stroke-linejoin: round; }
       .graph-legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 15px; }
       .legend-item { color: var(--muted); font-size: .8rem; }
       .legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
@@ -90,7 +90,7 @@
     <main>
       <header class="topbar">
         <a class="back" href="/">← ResearchPath</a>
-        <span class="version">Research lab · v0.6.0</span>
+        <span class="version">Research lab · v0.6.1</span>
       </header>
 
       <section class="hero">
@@ -134,7 +134,7 @@
             <p class="panel-description">
               Each node is a demo paper. Horizontal position follows publication
               year; color identifies the primary topic; node size reflects cited-by
-              count. Click a node for details.
+              count. Labels use collision avoidance. Click a node for the full title.
             </p>
           </div>
           <span class="version" id="graph-count"></span>
@@ -206,9 +206,11 @@
         const maxYear = Math.max(...years);
         const topics = [...new Set(nodes.map((node) => node.topics[0] || "other"))].sort();
         const positions = new Map();
+        const plotLeft = 175;
+        const plotRight = 950;
         const colors = new Map(topics.map((topic, index) => [topic, palette[index % palette.length]]));
         nodes.forEach((node) => {
-          const x = 78 + (node.year - minYear) / Math.max(maxYear - minYear, 1) * 850;
+          const x = plotLeft + (node.year - minYear) / Math.max(maxYear - minYear, 1) * (plotRight - plotLeft);
           const topicIndex = topics.indexOf(node.topics[0] || "other");
           const y = 70 + topicIndex / Math.max(topics.length - 1, 1) * 405;
           positions.set(node.id, { x, y });
@@ -221,13 +223,13 @@
         svg.appendChild(defs);
         topics.forEach((topic, index) => {
           const y = 70 + index / Math.max(topics.length - 1, 1) * 405;
-          svg.appendChild(svgElement("line", { x1: 60, y1: y, x2: 950, y2: y, class: "graph-grid" }));
+          svg.appendChild(svgElement("line", { x1: 155, y1: y, x2: plotRight, y2: y, class: "graph-grid" }));
           const label = svgElement("text", { x: 12, y: y + 4, class: "graph-axis" });
           label.textContent = topic;
           svg.appendChild(label);
         });
         [minYear, Math.round((minYear + maxYear) / 2), maxYear].forEach((year) => {
-          const x = 78 + (year - minYear) / Math.max(maxYear - minYear, 1) * 850;
+          const x = plotLeft + (year - minYear) / Math.max(maxYear - minYear, 1) * (plotRight - plotLeft);
           svg.appendChild(svgElement("line", { x1: x, y1: 32, x2: x, y2: 510, class: "graph-grid" }));
           const label = svgElement("text", { x: x - 16, y: 540, class: "graph-axis" });
           label.textContent = year;
@@ -238,6 +240,38 @@
           const target = positions.get(edge.target);
           if (!source || !target) return;
           svg.appendChild(svgElement("line", { x1: source.x, y1: source.y, x2: target.x, y2: target.y, class: "graph-edge" }));
+        });
+        const labelText = (title) => {
+          const compact = title.replace(/^The /, "").split(":")[0];
+          return compact.length > 22 ? compact.slice(0, 20) + "…" : compact;
+        };
+        const labelPositions = new Map();
+        const occupiedLabels = [];
+        const labelOffsets = [0, -22, 22, -44, 44, -66, 66, -88, 88, -110, 110];
+        nodes.forEach((node) => {
+          const point = positions.get(node.id);
+          const radius = 6 + Math.min(8, Math.sqrt(node.cited_by_count) / 15);
+          const text = labelText(node.label);
+          const textWidth = Math.max(52, text.length * 6.2);
+          const anchor = point.x > 820 ? "end" : "start";
+          const x = anchor === "start" ? point.x + radius + 6 : point.x - radius - 6;
+          const left = anchor === "start" ? x : x - textWidth;
+          const right = anchor === "start" ? x + textWidth : x;
+          let chosen;
+          for (const offset of labelOffsets) {
+            const y = Math.max(38, Math.min(510, point.y + 4 + offset));
+            const box = { left, right, top: y - 11, bottom: y + 5 };
+            const overlaps = occupiedLabels.some((other) =>
+              box.left < other.right + 5 && box.right + 5 > other.left &&
+              box.top < other.bottom + 4 && box.bottom + 4 > other.top
+            );
+            if (!overlaps) {
+              chosen = { x, y, anchor, text };
+              occupiedLabels.push(box);
+              break;
+            }
+          }
+          labelPositions.set(node.id, chosen || { x, y: point.y + 4, anchor, text });
         });
         const detail = document.getElementById("node-detail");
         const selectNode = (node, circle) => {
@@ -257,8 +291,9 @@
           circle.appendChild(title);
           circle.addEventListener("click", () => selectNode(node, circle));
           svg.appendChild(circle);
-          const label = svgElement("text", { x: point.x + radius + 5, y: point.y + 4, class: "graph-label" });
-          label.textContent = node.label.length > 26 ? node.label.slice(0, 24) + "…" : node.label;
+          const labelPosition = labelPositions.get(node.id);
+          const label = svgElement("text", { x: labelPosition.x, y: labelPosition.y, "text-anchor": labelPosition.anchor, class: "graph-label" });
+          label.textContent = labelPosition.text;
           svg.appendChild(label);
         });
         document.getElementById("graph-count").textContent = data.stats.nodes + " nodes · " + data.stats.edges + " edges";
